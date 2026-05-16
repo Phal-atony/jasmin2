@@ -1,4 +1,4 @@
-﻿import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 import { writeAudit } from "@/lib/audit";
@@ -17,21 +17,23 @@ const schema = z.object({
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const body = await req.json().catch(() => ({}));
   const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Invalid" }, { status: 400 });
-  const banner = await prisma.heroBanner.update({ where: { id: params.id }, data: parsed.data });
-  await writeAudit({ action: "banner.update", targetType: "banner", targetId: params.id, details: parsed.data });
+  const banner = await prisma.heroBanner.update({ where: { id: id }, data: parsed.data });
+  await writeAudit({ action: "banner.update", targetType: "banner", targetId: id, details: parsed.data });
   return NextResponse.json(banner);
 }
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  await prisma.heroBanner.delete({ where: { id: params.id } });
-  await writeAudit({ action: "banner.delete", targetType: "banner", targetId: params.id });
+  const { id } = await params;
+  await prisma.heroBanner.delete({ where: { id: id } });
+  await writeAudit({ action: "banner.delete", targetType: "banner", targetId: id });
   return NextResponse.json({ ok: true });
 }

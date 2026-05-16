@@ -27,7 +27,7 @@ export default function EditBlogPostPage() {
   const [uploading, setUploading] = useState(false);
 
   async function load() {
-    const res = await fetch(`/api/admin/blog/${params.id}`);
+    const res = await fetch(`/api/admin/blog/${id}`);
     if (res.ok) {
       const p = await res.json();
       setForm({
@@ -45,7 +45,7 @@ export default function EditBlogPostPage() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id]);
+  }, [id]);
 
   async function upload(file: File) {
     if (!form) return;
@@ -63,7 +63,7 @@ export default function EditBlogPostPage() {
   async function save() {
     if (!form) return;
     setSaving(true);
-    const res = await fetch(`/api/admin/blog/${params.id}`, {
+    const res = await fetch(`/api/admin/blog/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
@@ -77,7 +77,7 @@ export default function EditBlogPostPage() {
 
   async function remove() {
     if (!confirm("Delete this post permanently?")) return;
-    await fetch(`/api/admin/blog/${params.id}`, { method: "DELETE" });
+    await fetch(`/api/admin/blog/${id}`, { method: "DELETE" });
     router.push("/admin/blog");
   }
 

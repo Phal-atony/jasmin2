@@ -1,13 +1,14 @@
-﻿import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const body = await req.json();
     const promo = await prisma.promoCode.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         ...(typeof body.active === "boolean" ? { active: body.active } : {}),
         ...(typeof body.maxUses === "number" ? { maxUses: body.maxUses } : {}),
@@ -22,9 +23,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await prisma.promoCode.delete({ where: { id: params.id } });
+    await prisma.promoCode.delete({ where: { id: id } });
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Not found" }, { status: 404 });

@@ -1,4 +1,4 @@
-﻿import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 import { writeAudit } from "@/lib/audit";
@@ -15,21 +15,23 @@ const schema = z.object({
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const body = await req.json().catch(() => ({}));
   const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Invalid" }, { status: 400 });
-  const faq = await prisma.faq.update({ where: { id: params.id }, data: parsed.data });
-  await writeAudit({ action: "faq.update", targetType: "faq", targetId: params.id, details: parsed.data });
+  const faq = await prisma.faq.update({ where: { id: id }, data: parsed.data });
+  await writeAudit({ action: "faq.update", targetType: "faq", targetId: id, details: parsed.data });
   return NextResponse.json(faq);
 }
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  await prisma.faq.delete({ where: { id: params.id } });
-  await writeAudit({ action: "faq.delete", targetType: "faq", targetId: params.id });
+  const { id } = await params;
+  await prisma.faq.delete({ where: { id: id } });
+  await writeAudit({ action: "faq.delete", targetType: "faq", targetId: id });
   return NextResponse.json({ ok: true });
 }

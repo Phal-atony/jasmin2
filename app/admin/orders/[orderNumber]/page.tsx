@@ -28,7 +28,7 @@ export default function AdminOrderDetailPage() {
 
   async function load() {
     setLoading(true);
-    const res = await fetch(`/api/admin/orders/${params.orderNumber}`);
+    const res = await fetch(`/api/admin/orders/${orderNumber}`);
     if (res.ok) {
       const data = await res.json();
       setOrder(data);
@@ -41,11 +41,11 @@ export default function AdminOrderDetailPage() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.orderNumber]);
+  }, [orderNumber]);
 
   async function updateStatus(newStatus: string) {
     setUpdating(true);
-    await fetch(`/api/admin/orders/${params.orderNumber}`, {
+    await fetch(`/api/admin/orders/${orderNumber}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -60,7 +60,7 @@ export default function AdminOrderDetailPage() {
 
   async function refreshFromGateway() {
     setUpdating(true);
-    const res = await fetch(`/api/admin/orders/${params.orderNumber}/refresh`, { method: "POST" });
+    const res = await fetch(`/api/admin/orders/${orderNumber}/refresh`, { method: "POST" });
     if (res.ok) {
       const data = await res.json();
       alert(`KHPay says: ${data.remote?.status ?? "unknown"}${data.updated ? " — order updated" : ""}`);
