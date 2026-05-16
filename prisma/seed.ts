@@ -183,8 +183,11 @@ async function main() {
       create: gameData,
     });
 
-    // Clear old products for this game and recreate to keep seed idempotent
-    await prisma.product.deleteMany({ where: { gameId: game.id } });
+   // Clear old orders first because orders reference products
+await prisma.order.deleteMany({ where: { gameId: game.id } });
+
+// Clear old products for this game and recreate to keep seed idempotent
+await prisma.product.deleteMany({ where: { gameId: game.id } });
     for (let i = 0; i < products.length; i++) {
       const p = products[i];
       await prisma.product.create({
