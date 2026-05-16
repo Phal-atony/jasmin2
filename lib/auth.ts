@@ -1,49 +1,64 @@
-import { NextRequest, NextResponse } from "next/server";
-export const dynamic = "force-dynamic";
+import jwt from "jsonwebtoken";
 
-import { z } from "zod";
-import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
-import { signAdminToken, buildAuthCookie, buildClearCookie } from "@/lib/auth";
+const ADMIN_COOKIE_NAME = "admin_token";
 
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
-});
+function getAdminJwtSecret() {
+  const secret = process.env.ADMIN_JWT_SECRET;
 
-export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
-  const parsed = loginSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid credentials" }, { status: 400 });
+  if (!secret) {
+    throw new Error("ADMIN_JWT_SECRET is not set");
   }
 
-  const admin = await prisma.admin.findUnique({
-    where: { email: parsed.data.email },
-  });
+  return secret;
+}
 
-  if (!admin) {
-    return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
-  }
-
-  const passwordMatch = await bcrypt.compare(parsed.data.password, admin.passwordHash);
-  if (!passwordMatch) {
-    return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
-  }
-
-  const token = await signAdminToken(admin.id);
-  const cookie = buildAuthCookie(token);
-
-  return NextResponse.json(
-    { ok: true, email: admin.email },
-    { headers: { "Set-Cookie": cookie } }
+export function signAdminToken(adminId: string) {
+  return jwt.sign(
+    {
+      adminId,
+    },
+    getAdminJwtSecret(),
+    {
+      expiresIn: "7d",
+    }
   );
 }
 
-export async function DELETE() {
-  const cookie = buildClearCookie();
-  return NextResponse.json(
-    { ok: true },
-    { headers: { "Set-Cookie": cookie } }
-  );
+export function verifyAdminToken(token: string) {
+  try {
+    return jwt.verify(token, getAdminJwtSecret()) as {
+      adminId: string;
+      iat: number;
+      exp: number;
+    };
+  } catch {
+    return null;
+  }
 }
+
+export function buildAuthCookie(token: string) {
+  const isProduction = process.env.NODE_ENV === "production";
+
+  return [
+    `${ADMIN_COOKIE_NAME}=${token}`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+    "Max-Age=604800",
+    isProduction ? "Secure" : "",
+  ]
+    .filter(Boolean)
+    .join("; ");
+}
+
+export function buildClearCookie() {
+  return [
+    `${ADMIN_COOKIE_NAME}=`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+    "Max-Age=0",
+  ].join("; ");
+}
+
+export { ADMIN_COOKIE_NAME };
