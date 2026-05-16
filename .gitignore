@@ -43,4 +43,7 @@ yarn-error.log*
 /public/uploads/*.webp
 /public/uploads/*.gif
 /public/uploads/*.svg
-!/public/uploads/.gitkeep
+!/public/uploads/.gitkeep.env
+.env.local
+node_modules/
+.next/
